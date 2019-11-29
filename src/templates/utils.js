@@ -7,47 +7,59 @@ import {
   MODULE_NAME,
   routesNameSeparator,
   vuex
-} from './options'
+} from "./options";
 
 /**
  * Asynchronously load messages from translation files
  * @param  {Context}  context  Nuxt context
  * @param  {String}   locale  Language code to load
  */
-export async function loadLanguageAsync (context, locale) {
-  const { app } = context
+export async function loadLanguageAsync(context, locale) {
+  const { app } = context;
 
   if (!app.i18n.loadedLanguages) {
-    app.i18n.loadedLanguages = []
+    app.i18n.loadedLanguages = [];
   }
 
   if (!app.i18n.loadedLanguages.includes(locale)) {
-    const langOptions = app.i18n.locales.find(l => l[LOCALE_CODE_KEY] === locale)
+    const langOptions = app.i18n.locales.find(
+      l => l[LOCALE_CODE_KEY] === locale
+    );
     if (langOptions) {
-      const file = langOptions[LOCALE_FILE_KEY]
+      const file = langOptions[LOCALE_FILE_KEY];
       if (file) {
         // Hiding template directives from eslint so that parsing doesn't break.
         /* <% if (options.langDir) { %> */
         try {
-          const module = await import(/* webpackChunkName: "lang-[request]" */ '~/<%= options.langDir %>' + file)
-          const messages = module.default ? module.default : module
-          const result = typeof messages === 'function' ? await Promise.resolve(messages(context)) : messages
-          app.i18n.setLocaleMessage(locale, result)
-          app.i18n.loadedLanguages.push(locale)
+          // const module = await import(/* webpackChunkName: "lang-[request]" */ '~/<%= options.langDir %>' + file)
+          const module = await import(
+            /* webpackChunkName: "lang-[request]" */ "/builds/eveclass/eveclass-platform/<%= options.langDir %>" +
+              file
+          );
+          const messages = module.default ? module.default : module;
+          const result =
+            typeof messages === "function"
+              ? await Promise.resolve(messages(context))
+              : messages;
+          app.i18n.setLocaleMessage(locale, result);
+          app.i18n.loadedLanguages.push(locale);
         } catch (error) {
           // eslint-disable-next-line no-console
-          console.error(error)
+          console.error(error);
         }
         /* <% } %> */
       } else {
         // eslint-disable-next-line no-console
-        console.warn(`[${MODULE_NAME}] Could not find lang file for locale ${locale}`)
+        console.warn(
+          `[${MODULE_NAME}] Could not find lang file for locale ${locale}`
+        );
       }
     }
   }
 }
 
-const isObject = value => value && !Array.isArray(value) && typeof value === 'object'
+const isObject = value =>
+  value && !Array.isArray(value) && typeof value === "object";
 
 /**
  * Validate setRouteParams action's payload
@@ -56,21 +68,25 @@ const isObject = value => value && !Array.isArray(value) && typeof value === 'ob
 export const validateRouteParams = routeParams => {
   if (!isObject(routeParams)) {
     // eslint-disable-next-line no-console
-    console.warn(`[${MODULE_NAME}] Route params should be an object`)
-    return
+    console.warn(`[${MODULE_NAME}] Route params should be an object`);
+    return;
   }
   Object.entries(routeParams).forEach(([key, value]) => {
     if (!localeCodes.includes(key)) {
-    // eslint-disable-next-line no-console
-      console.warn(`[${MODULE_NAME}] Trying to set route params for key ${key} which is not a valid locale`)
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[${MODULE_NAME}] Trying to set route params for key ${key} which is not a valid locale`
+      );
     } else if (!isObject(value)) {
-    // eslint-disable-next-line no-console
-      console.warn(`[${MODULE_NAME}] Trying to set route params for locale ${key} with a non-object value`)
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[${MODULE_NAME}] Trying to set route params for locale ${key} with a non-object value`
+      );
     }
-  })
-}
+  });
+};
 
-const trailingSlashRE = /\/?$/
+const trailingSlashRE = /\/?$/;
 
 /**
  * Determines if objects are equal.
@@ -79,23 +95,23 @@ const trailingSlashRE = /\/?$/
  * @param {Object} [b={}]
  * @return {boolean} True if objects equal, False otherwise.
  */
-function isObjectEqual (a = {}, b = {}) {
+function isObjectEqual(a = {}, b = {}) {
   // handle null value #1566
-  if (!a || !b) return a === b
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
+  if (!a || !b) return a === b;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
   if (aKeys.length !== bKeys.length) {
-    return false
+    return false;
   }
   return aKeys.every(key => {
-    const aVal = a[key]
-    const bVal = b[key]
+    const aVal = a[key];
+    const bVal = b[key];
     // check nested equality
-    if (typeof aVal === 'object' && typeof bVal === 'object') {
-      return isObjectEqual(aVal, bVal)
+    if (typeof aVal === "object" && typeof bVal === "object") {
+      return isObjectEqual(aVal, bVal);
     }
-    return String(aVal) === String(bVal)
-  })
+    return String(aVal) === String(bVal);
+  });
 }
 
 /**
@@ -105,16 +121,17 @@ function isObjectEqual (a = {}, b = {}) {
  * @param {Route} [b]
  * @return {boolean} True if routes the same, False otherwise.
  */
-export function isSameRoute (a, b) {
+export function isSameRoute(a, b) {
   if (!b) {
-    return false
+    return false;
   }
   if (a.path && b.path) {
     return (
-      a.path.replace(trailingSlashRE, '') === b.path.replace(trailingSlashRE, '') &&
+      a.path.replace(trailingSlashRE, "") ===
+        b.path.replace(trailingSlashRE, "") &&
       a.hash === b.hash &&
       isObjectEqual(a.query, b.query)
-    )
+    );
   }
   if (a.name && b.name) {
     return (
@@ -122,9 +139,9 @@ export function isSameRoute (a, b) {
       a.hash === b.hash &&
       isObjectEqual(a.query, b.query) &&
       isObjectEqual(a.params, b.params)
-    )
+    );
   }
-  return false
+  return false;
 }
 
 /**
@@ -132,18 +149,20 @@ export function isSameRoute (a, b) {
  * @param  {object} req
  * @return {String} x-forwarded-host
  */
-const getForwarded = req => (
-  process.client ? window.location.href.split('/')[2] : (req.headers['x-forwarded-host'] ? req.headers['x-forwarded-host'] : req.headers.host)
-)
+const getForwarded = req =>
+  process.client
+    ? window.location.href.split("/")[2]
+    : req.headers["x-forwarded-host"]
+    ? req.headers["x-forwarded-host"]
+    : req.headers.host;
 
 /**
  * Get hostname
  * @param  {object} req
  * @return {String} Hostname
  */
-const getHostname = req => (
-  process.client ? window.location.href.split('/')[2] : req.headers.host
-)
+const getHostname = req =>
+  process.client ? window.location.href.split("/")[2] : req.headers.host;
 
 /**
  * Get locale code that corresponds to current hostname
@@ -152,15 +171,19 @@ const getHostname = req => (
  * @return {String} Locade code found if any
  */
 export const getLocaleDomain = (nuxtI18n, req) => {
-  const hostname = nuxtI18n.forwardedHost ? getForwarded(req) : getHostname(req)
+  const hostname = nuxtI18n.forwardedHost
+    ? getForwarded(req)
+    : getHostname(req);
   if (hostname) {
-    const localeDomain = nuxtI18n.locales.find(l => l[LOCALE_DOMAIN_KEY] === hostname)
+    const localeDomain = nuxtI18n.locales.find(
+      l => l[LOCALE_DOMAIN_KEY] === hostname
+    );
     if (localeDomain) {
-      return localeDomain[LOCALE_CODE_KEY]
+      return localeDomain[LOCALE_CODE_KEY];
     }
   }
-  return null
-}
+  return null;
+};
 
 /**
  * Extract locale code from given route:
@@ -170,25 +193,28 @@ export const getLocaleDomain = (nuxtI18n, req) => {
  * @return {String}                     Locale code found if any
  */
 export const getLocaleFromRoute = (route = {}) => {
-  const localesPattern = `(${localeCodes.join('|')})`
-  const defaultSuffixPattern = `(?:${routesNameSeparator}${defaultLocaleRouteNameSuffix})?`
+  const localesPattern = `(${localeCodes.join("|")})`;
+  const defaultSuffixPattern = `(?:${routesNameSeparator}${defaultLocaleRouteNameSuffix})?`;
   // Extract from route name
   if (route.name) {
-    const regexp = new RegExp(`${routesNameSeparator}${localesPattern}${defaultSuffixPattern}$`, 'i')
-    const matches = route.name.match(regexp)
+    const regexp = new RegExp(
+      `${routesNameSeparator}${localesPattern}${defaultSuffixPattern}$`,
+      "i"
+    );
+    const matches = route.name.match(regexp);
     if (matches && matches.length > 1) {
-      return matches[1]
+      return matches[1];
     }
   } else if (route.path) {
     // Extract from path
-    const regexp = new RegExp(`^/${localesPattern}/`, 'i')
-    const matches = route.path.match(regexp)
+    const regexp = new RegExp(`^/${localesPattern}/`, "i");
+    const matches = route.path.match(regexp);
     if (matches && matches.length > 1) {
-      return matches[1]
+      return matches[1];
     }
   }
-  return null
-}
+  return null;
+};
 
 /**
  * Dispatch store module actions to keep it in sync with app's locale data
@@ -200,10 +226,10 @@ export const getLocaleFromRoute = (route = {}) => {
 export const syncVuex = async (store, locale = null, messages = null) => {
   if (vuex && store) {
     if (locale !== null && vuex.syncLocale) {
-      await store.dispatch(vuex.moduleName + '/setLocale', locale)
+      await store.dispatch(vuex.moduleName + "/setLocale", locale);
     }
     if (messages !== null && vuex.syncMessages) {
-      await store.dispatch(vuex.moduleName + '/setMessages', messages)
+      await store.dispatch(vuex.moduleName + "/setMessages", messages);
     }
   }
-}
+};
